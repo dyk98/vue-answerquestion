@@ -6,14 +6,26 @@
                 <返回
             </p>
         </div>
-        <div v-for="question in questions">
-            <p>题目{{question.index}}:{{question.question}}</p>
-            <input type="radio" :name="question.index" value="a" :class="question.num">{{question.option_a}}
-            <input type="radio" :name="question.index" value="b" :class="question.num">>{{question.option_b}}
-            <input type="radio" :name="question.index" value="c" :class="question.num">>{{question.option_c}}
-            <input type="radio" :name="question.index" value="d" :class="question.num">>{{question.option_d}}
+        <div class="padding">
+            <div v-if="countdown >= 0">倒计时:{{countdown}}</div>
+            <div v-for="question in questions" v-if="question.index == questionnum" class="questionall">
+                <p>题目{{question.index}}:{{question.question}}</p>
+                A:<input type="radio" :name="question.index" value="a" :class="question.num" checked>{{question.option_a}}
+                B:<input type="radio" :name="question.index" value="b" :class="question.num">{{question.option_b}}
+                C:<input type="radio" :name="question.index" value="c" :class="question.num">{{question.option_c}}
+                D:<input type="radio" :name="question.index" value="d" :class="question.num">{{question.option_d}}
+            </div>
+            <div v-if="questionnum == 0">
+                <button class="overanswer homebutton" @click="startanswer">开始作答</button>
+                <p class="timerule">共20道题，每道题限时20秒，若回答正确则进入下题，若回答错误则提示正确答案</p>
+            </div>
+            <button class="overanswer homebutton" @click="nextquestion" v-if="questionnum != 20 && questionnum!= 0">
+                下一题
+            </button>
+            <button class="overanswer homebutton" @click="giveanswer" v-if="questionnum == 20">提交答案</button>
+            <p class="timerule" v-if="ontips">{{tips}}</p>
         </div>
-        <button class="overanswer homebutton" @click="giveanswer">提交答案</button>
+
     </div>
 </template>
 
@@ -60,9 +72,59 @@
                 phone: this.$route.query.phone,
                 name: this.$route.query.name,
                 mark: 0,
+                questionnum: 0,
+                tips: '',
+                ontips: false,
+                haveclick: false,
+                countdown: 20,
             }
         },
         methods: {
+            startanswer() {
+                this.questionnum++
+                let clock = window.setInterval(() => {
+                    this.countdown--
+                    if (this.countdown <= 0) {     //当倒计时小于0时清除定时器
+                        this.$options.methods.nextquestion.bind(this)()
+                    }
+                }, 1000)
+            },
+            nextquestion() {
+                if (this.haveclick == true) {
+                    this.questionnum++
+                    this.haveclick = false
+                    this.ontips = false
+                    this.countdown = 20
+                    var clock = window.setInterval(() => {
+                        this.countdown--
+                        if (this.countdown <= 0) {     //当倒计时小于0时清除定时器
+                            this.$options.methods.nextquestion()
+                            window.clearInterval(clock)
+                        }
+                    }, 1000)
+                    window.clearInterval(clock)
+                } else {
+                    var i = this.questionnum - 1
+                    var obj = document.getElementsByClassName('answer' + i + '')
+                    for (var u = 0; u < obj.length; u++) {
+                        obj[u].disabled = true
+                        if (obj[u].checked) {
+                            if (obj[u].value == this.questions[i].true_option) {
+                                this.countdown = 20
+                                this.mark++
+                                this.questionnum++
+                                this.haveclick = false
+                                this.ontips = false
+                                window.clearInterval(clock)
+                            } else {
+                                this.ontips = true
+                                this.tips = '该题正确答案为' + this.questions[i].true_option + ''
+                                this.haveclick = true
+                            }
+                        }
+                    }
+                }
+            },
             goback() {
                 //console.log(this.phone)
                 this.$router.push('/')
@@ -72,16 +134,6 @@
                     alert('请从正式渠道进入')
                 } else {
                     var that = this;
-                    for (let i = 0; i <= this.questions.length; i++) {
-                        var obj = document.getElementsByClassName('answer' + i + '');
-                        for (var u = 0; u < obj.length; u++) {
-                            if (obj[u].checked) {
-                                if (obj[u].value == that.questions[i].true_option) {
-                                    that.mark++
-                                }
-                            }
-                        }
-                    }
                     this.$http.get('http://sgh2.clarkwan.com/api/question/getUserinfo', {
                         params: {
                             mobile: that.phone,
@@ -130,5 +182,21 @@
         margin-left: 10px;
         background-color: rgb(237, 96, 45);
         margin-bottom: 30px;
+    }
+
+    .padding {
+        padding-top: 20%;
+    }
+
+    .questionall {
+        padding-left: 10px;
+    }
+
+    .timerule {
+        background-color: white;
+        width: 95%;
+        text-align: center;
+        margin-left: 10px;
+        border-radius: 5px;
     }
 </style>

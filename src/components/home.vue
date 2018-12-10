@@ -1,11 +1,6 @@
 <template>
     <div style="text-align: center">
         <mybackground/>
-
-        <button class="homebutton">已经有{{joinnum}}人参与此活动</button>
-        <button class="homebutton">分享我的快乐</button>
-        <button class="homebutton">技术支持：{{company}}</button>
-        <button class="homebutton" @click="startanswer">开始答题</button>
         <div class="userinfo">
             <div>
                 <p>请输入姓名：</p>
@@ -16,6 +11,12 @@
                 <input class="usermsg" type="number" placeholder="手机号必填" v-model="userphone">
             </div>
         </div>
+        <button class="homebutton" @click="startanswer">开始答题</button>
+        <button class="homebutton">已经有{{joinnum}}人参与此活动</button>
+        <button class="homebutton">分享我的快乐</button>
+        <button class="homebutton">技术支持：{{company}}</button>
+
+
         <myfooter where="home"/>
     </div>
 </template>
@@ -59,8 +60,7 @@
                         } else {
                             if (that.username <2 || that.username >4) {
                                 alert(请输入正确姓名)
-                            } else {
-                                this.$http.get('http://sgh2.clarkwan.com/api/question/checkNum', {
+                            } else {                                this.$http.get('http://sgh2.clarkwan.com/api/question/checkNum', {
                                     params: {
                                         mobile: that.userphone
                                     }
